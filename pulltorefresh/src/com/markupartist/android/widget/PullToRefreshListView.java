@@ -21,6 +21,9 @@ import android.widget.AbsListView.OnScrollListener;
 
 import com.markupartist.android.widget.pulltorefresh.R;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 public class PullToRefreshListView extends ListView implements OnScrollListener {
 
     private static final int TAP_TO_REFRESH = 1;
@@ -55,6 +58,10 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
     private int mLastMotionY;
 
     private boolean mBounceHack;
+    
+    private String  lastUpdatedText;
+    private long lastUpdated = -1;
+    private SimpleDateFormat lastUpdatedDateFormat = new SimpleDateFormat("yy/MM/dd HH:mm:ss");
 
     public PullToRefreshListView(Context context) {
         super(context);
@@ -99,6 +106,8 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
             (ProgressBar) mRefreshView.findViewById(R.id.pull_to_refresh_progress);
         mRefreshViewLastUpdated =
             (TextView) mRefreshView.findViewById(R.id.pull_to_refresh_updated_at);
+        
+        lastUpdatedText = getContext().getString(R.string.pull_to_refresh_last_updated);
 
         mRefreshViewImage.setMinimumHeight(50);
         mRefreshView.setOnClickListener(new OnClickRefreshListener());
@@ -158,6 +167,17 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
             mRefreshViewLastUpdated.setVisibility(View.GONE);
         }
     }
+    
+    /**
+     * Default: "yy/MM/dd HH:mm:ss". Set the format in which the last-updated
+     * date/time is shown. Meaningless if 'showLastUpdatedText == false (default)'.
+     * See 'setShowLastUpdatedText'.
+     *
+     * @param lastUpdatedDateFormat
+     */
+    public void setLastUpdatedDateFormat(SimpleDateFormat lastUpdatedDateFormat){
+        this.lastUpdatedDateFormat = lastUpdatedDateFormat;
+    }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -186,6 +206,9 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
                 }
                 break;
             case MotionEvent.ACTION_DOWN:
+                if(lastUpdated != -1){
+                    setLastUpdated(String.format(lastUpdatedText, lastUpdatedDateFormat.format(new Date(lastUpdated))));
+                }
                 mLastMotionY = y;
                 break;
             case MotionEvent.ACTION_MOVE:
@@ -366,6 +389,8 @@ public class PullToRefreshListView extends ListView implements OnScrollListener 
      */
     public void onRefreshComplete() {        
         Log.d(TAG, "onRefreshComplete");
+        
+        lastUpdated = System.currentTimeMillis();
 
         resetHeader();
 
